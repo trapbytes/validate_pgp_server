@@ -1,0 +1,7 @@
+.git/
+.gitignore
+certs/*
+Cargo.lock
+target/*
+start_docker.sh
+tests/*

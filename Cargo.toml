@@ -1,0 +1,66 @@
+[package]
+name = "validate_pgp_server"
+version = "0.1.0"
+edition = "2021"
+#rust-version = "1.60.0"
+description = "pgp validation server"
+keywords = ["pgp","validation server"]
+categories = ["pgp", "pgp decode", "pgp validate"]
+
+
+[profile.dev]
+opt-level = 0
+debug = true
+split-debuginfo = 'off'  # Platform-specific.
+debug-assertions = true
+overflow-checks = true
+lto = false
+panic = 'unwind'
+incremental = true
+codegen-units = 256
+rpath = false
+
+[profile.release]
+opt-level = 3
+debug = false
+split-debuginfo = 'off'  # Platform-specific.
+debug-assertions = false
+overflow-checks = false
+lto = false
+panic = 'unwind'
+incremental = false
+codegen-units = 16
+rpath = false
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dev-dependencies]
+tokio-test = "*"
+
+
+[dependencies]
+anyhow = "1.0.64"
+async-trait = "0.1.64"
+base64 = "0.13.0"
+bufstream = "0.1.4"
+bytes = { version = "1", features = ["serde"] }
+byteorder = "1.4.3"
+chrono = { version = "0.4.22", features = ["unstable-locales"] }
+crossbeam = "0.8.1"
+crossbeam-utils = "0.8.6"
+crossbeam-channel = "0.5.2"
+easy-args = "0.3.0"
+futures = "0.3.21"
+hex = "0.4.3"
+libc = "0.2.117"
+openssl = "0.10.38"
+openssl-sys = "0.9.72"
+serde = { version = "1.0.136", features = ["derive"] }
+serde_json = "1.0.78"
+sequoia-openpgp = "1.10.0"
+signal-hook = "0.3.13"
+tokio = { version = "1.26.0", features = ["full"] }
+tokio-util = { version = "0.7.7", features = ["codec"] }
+#
+#

@@ -1,0 +1,97 @@
+#!/usr/bin/python3
+#
+#
+#
+import sys
+import io
+from optparse import OptionParser
+import logging 
+import socket
+import ssl
+
+
+TEST=0
+PpgDecodeServerAddr = '192.168.1.20:2569'
+logger = None
+
+
+
+''' Parse our command line options '''
+def parse_options():
+    p = OptionParser()
+    p.add_option("-p", "--pgp-data", dest="pgp_data", help="input pgp signature")
+    p.add_option("-v", "--verbose", dest="verbose", action="store_true", \
+                 default=False, help="verbose output")
+    #
+    p.add_option("-N", "--noexec", dest="noexec", action="store_true", \
+                 default=False, help="noexec mode output")
+    p.add_option("-L", "--pgp-host", dest="pgp_host", \
+                 default=PpgDecodeServerAddr, help="pgp decode server host and port")
+    #
+    (opts, args) = p.parse_args()
+    if not opts.pgp_data:
+       p.error("option -p is missing please supply")
+    return opts
+
+
+'''
+  open ssl socket to the pgp decode server
+'''
+def proc_ssl_get(opts):
+    ''' '''
+    host, port = opts.pgp_host.split(':')
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(10)
+    #
+    client_msg = "PGP_CHK_REQ;{0}\r\n\r\n".format(opts.pgp_data)
+    client_msg = bytearray(client_msg, 'utf-8')
+    # set context
+    context =  ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    wrappedSocket = ssl.wrap_socket(sock)
+    # connect
+    wrappedSocket.connect((host, int(port)))
+    wrappedSocket.send(client_msg)
+    sdata = wrappedSocket.recv(1280)
+    # CLOSE SOCKET CONNECTION
+    wrappedSocket.close()
+    return sdata.decode("utf-8")
+
+
+'''
+  process gpg decode request
+'''
+def proc_gpg_sig(opts):
+    server_key_msg = proc_ssl_get(opts)
+    if server_key_msg == "unknown request\r\n\r\n":
+       logger.error("Error: server response: Bad license supplied")
+    elif server_key_msg == "":
+       logger.error("Error: server response empty: Bad license supplied")
+    else:
+       try:
+         logger.info("pgp-file-ok: '{0}'".format(server_key_msg))
+         #logger.info("license-ok:")
+       except KeyError as ke:
+         logger.error("Error: generating info Key data missing!!!")
+       except Exception as e:
+         logger.error("Error: unknown error: '{}', exiting  ".format(e))
+    return 0
+
+
+if __name__ == '__main__':
+   formatter = logging.Formatter(
+               "%(asctime)s - %(funcName)s - %(levelname)s - %(message)s"
+              )
+   handler = logging.StreamHandler()
+   handler.setLevel(logging.INFO)
+   handler.setFormatter(formatter)
+   logger = logging.getLogger(__name__)
+   logger.setLevel(logging.INFO)
+   logger.addHandler(handler)
+
+   logger.info("Starting...")
+   opts = parse_options()
+   logger.info("checking pgp encrypted data ...")
+   proc_gpg_sig(opts)
+   sys.exit(0)

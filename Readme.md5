@@ -1,0 +1,45 @@
+
+
+
+##########################################################################
+# Build Methods
+
+# Rust build
+#
+cargo build --release
+cargo test
+
+
+##########################################################################
+#
+# Docker build container
+VERSION=1.0.1
+sudo docker image build --force-rm -t validate_pgp_server:${VERSION} .
+
+
+
+##########################################################################
+# Operation
+#
+Encode a file/template with 
+1. Client input file is 'client.lic' 
+2. Output file is 'client_encrypted.lic'
+3. 'Passphrase.txt' contains the auth key for the pgp encryption/decryption
+
+> gpg --batch --armor --no-symkey-cache --passphrase-file Passphrase.txt \
+      --output client_encrypted.lic --symmetric --cipher-algo BLOWFISH client.lic
+
+Passphrase.txt - should be copied to the configuration file "auth_key" element, in order for the server to decode
+
+
+The 'client_encrypted.lic' is meant to be passed to a 'Server' that then passes it to this componet to decode 
+    And then based on the decrytion and the values that are decrypted accept or close the client connection.
+
+
+Client -> Server -> [ validate_pgp_server ] -> Server -> Client
+##########################################################################
+
+
+Eng Test:
+ tests/eng_test/start_binary.sh
+ tests/eng_test/test.sh
